@@ -165,7 +165,7 @@ function createReport(){
 
 if [ "$(echo $UID)" == "0" ]; then
     if [ "$#" -ne 2 ];then
-        echo -e "\n\t${LBlue}[${BYellow}!${LBlue}] ${BWhite}Uso: ${BGreen}./md2pdf.sh <input.md> <output.pdf>${Color_Off}\n"
+        echo -e "\n\t${LBlue}[${BYellow}!${LBlue}] ${BWhite}Uso: ${BGreen}$0 ${IGreen}<input.md> <output.pdf>${Color_Off}\n"
         exit 1
     fi
     banner
