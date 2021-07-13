@@ -85,6 +85,7 @@ function ctrl_c(){
 }
 
 function banner(){
+    tput civis
     echo -e "\n\t${BBlue}███╗   ███╗██████╗ ██████╗ ██████╗ ██████╗ ███████╗${Color_Off}"
     echo -e "\t${BBlue}████╗ ████║██╔══██╗╚════██╗██╔══██╗██╔══██╗██╔════╝${Color_Off}"
     echo -e "\t${BBlue}██╔████╔██║██║  ██║ █████╔╝██████╔╝██║  ██║█████╗  ${Color_Off}"
@@ -137,7 +138,9 @@ function dependencies(){
 
 function createZip(){
     echo -e "${BBlue}[${BBlue}INFO${BBlue}] ${BWhite}Creando paquete 7z${Color_Off}"
+    tput cnorm
     echo -en "${BPurple}[${BPurple}QUES${BPurple}] ${BWhite}Password para el archivo:${Color_Off} " && read PASSWORD
+    tput civis
     echo -e "${BBlue}[${BBlue}INFO${BBlue}] ${BWhite}Realizando paquete 7z...${Color_Off}"
     ZIP_PACKAGE="$FILE_PDF.7z"
     7z a $ZIP_PACKAGE -p$PASSWORD $FILE_PDF > /dev/null 2>&1
@@ -153,7 +156,9 @@ function createReport(){
     pandoc $FILE_MD -o $FILE_PDF --from markdown+yaml_metadata_block+raw_html --template eisvogel --table-of-contents --toc-depth 6 --number-sections --top-level-division=chapter --highlight-style zenburn
     if [ $? -eq 0 ];then
         echo -e "${BGreen}[${BGreen}PASS${BGreen}] ${BWhite}Creado correctamente el reporte ($FILE_PDF)${Color_Off}"
+        tput cnorm
         echo -en "${BPurple}[${BPurple}QUES${BPurple}] ${BWhite}Desea guardar el reporte en un archivo ZIP? (${BYellow}Y${BWhite}/${BRed}n${BWhite}):${Color_Off} " && read input
+        tput civis
         case "$input" in
             n|N) atril $FILE_PDF && echo -e "${BGreen}[${BGreen}PASS${BGreen}] ${BWhite}Visualización preliminar del reporte ($FILE_PDF)${Color_Off}";;
             *) createZip;;
@@ -161,6 +166,7 @@ function createReport(){
     else
         echo -e "${BRed}[${BRed}ERRO${BRed}] ${BWhite}Error al crear el reporte${Color_Off}\n"
     fi
+    tput cnorm
 }
 
 if [ "$(echo $UID)" == "0" ]; then
