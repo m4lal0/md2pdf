@@ -24,9 +24,7 @@ Ejemplos:
 + LaTeX-extra - (`apt install texlive-latex-extra`)
 + LaTeX-fonts-extra - (`apt install texlive-fonts-extra`)
 
-## Uso
-
-Escribir un reporte en **Markdown**.
+## Configuración del reporte
 
 Para tener buenos encabezados y pies de página, debe proporcionar metadatos a su documento. Puede hacerlo con un bloque de metadatos YAML en la parte superior de su documento de markdown (consulte el archivo de [markdown de ejemplo](examples/OSCP-exam-report-template_whoisflynn_v3.2.md)). Su documento de markdown puede tener el siguiente aspecto:
 
@@ -52,7 +50,26 @@ code-block-font-size: \scriptsize
 Here is the actual document text...
 ```
 
-#### Automático
+## Paleta de Colores
+
+Los conjuntos de colores que se pueden utilizar en la plantilla YAML frontmatter:
+
+titlepage-color          | titlepage-text-color | titlepage-rule-color
+-------------------------|----------------------|---------------------
+`DC143C` (Crimson)       | `FFFFFF` (White)     | `FFFFFF` (White)
+`00FF7F` (SpringGreen)   | `006400` DarkGreen   | `000000` (Black)
+`1E90FF` (DodgerBlue)    | `FFFAFA` (Snow)      | `FFFAFA` (Snow)
+`483D8B` (DarkSlateBlue) | `FFFAFA` (Snow)      | `FFFAFA` (Snow)
+`FFD700` (Gold)          | `000000` (Black)     | `000000` (Black)
+`FFEFD5` (PapayaWhip)    | `000000` (Black)     | `000000` (Black)
+`FF8C00` (DarkOrange)    | `000000` (Black)     | `000000` (Black)
+`FFEF96` (no name)       | `50394C` (no name)   | `50394C` (no name)
+
+![](https://camo.githubusercontent.com/ba98a7b385e2e246cf0eec6e3338f4b94434be1c41c2408fb67f8a8e435a716c/68747470733a2f2f692e696d6775722e636f6d2f586958495a67332e706e67)
+
+## Uso
+
+Escribir su reporte en **Markdown**.
 
 Ejecutar el script y pasar como primer argumento el archivo markdown y como segundo argumento proporcionar el nombre del reporte con extensión PDF que queremos que transforme:
 ```bash
