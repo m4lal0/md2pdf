@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #by @m4lal0
 
 # Regular Colors
@@ -73,9 +74,12 @@ On_Purple='\033[45m'    # Background Purple
 On_Cyan='\033[46m'      # Background Cyan
 On_White='\033[47m'     # Background White
 
+# Variables Globales
 FILE_MD=$1
 FILE_PDF=$2
+VERSION=1.0.1
 
+# Menejo del Ctrl + C
 trap ctrl_c INT
 
 function ctrl_c(){
@@ -84,8 +88,35 @@ function ctrl_c(){
     exit 1
 }
 
+function checkUpdate(){
+    GIT=$(curl --silent https://github.com/m4lal0/md2pdf/blob/main/md2pdf.sh | grep 'VERSION=' | cut -d">" -f2 | cut -d"<" -f1 | cut -d"=" -f 2)
+    if [[ "$GIT" == "$VERSION" || -z $GIT ]]; then
+        echo -e "${BGreen}[✔]${Color_Off} ${BGreen}La versión actual es la más reciente.${Color_Off}\n"
+        tput cnorm; exit 0
+    else
+        echo -e "${Yellow}[*]${Color_Off} ${IWhite}Actualización disponible${Color_Off}"
+        echo -e "${Yellow}[*]${Color_Off} ${IWhite}Actualización de la versión${Color_Off} ${BWhite}$VERSION${Color_Off} ${IWhite}a la${Color_Off} ${BWhite}$GIT${Color_Off}"
+        update="1"
+    fi
+}
+
+function installUpdate(){
+    echo -en "${Yellow}[*]${Color_Off} ${IWhite}Instalando actualización...${Color_Off}"
+    wget https://raw.githubusercontent.com/m4lal0/md2pdf/main/md2pdf.sh &>/dev/null
+    chmod +x md2pdf.sh &>/dev/null
+    mv md2pdf.sh /usr/local/bin/md2pdf &>/dev/null
+    if [ "$(echo $?)" == "0" ]; then
+        echo -e "${BGreen}[ OK ]${Color_Off}"
+    else
+        echo -e "${BRed}[ FAIL ]${Color_Off}"
+        tput cnorm && exit 1
+    fi
+    echo -e "\n${BGreen}[✔]${Color_Off} ${IGreen}Versión actualizada a${Color_Off} ${BWhite}$GIT${Color_Off}\n"
+    tput cnorm && exit 0
+}
+
 function banner(){
-    tput civis
+    clear && tput civis
     echo -e "\n\t${BBlue}███╗   ███╗██████╗ ██████╗ ██████╗ ██████╗ ███████╗${Color_Off}"
     echo -e "\t${BBlue}████╗ ████║██╔══██╗╚════██╗██╔══██╗██╔══██╗██╔════╝${Color_Off}"
     echo -e "\t${BBlue}██╔████╔██║██║  ██║ █████╔╝██████╔╝██║  ██║█████╗  ${Color_Off}"
@@ -96,30 +127,41 @@ function banner(){
 }
 
 function dependencies(){
-    echo -e "\n${BBlue}[${BBlue}INFO${BBlue}] ${BWhite}Comprobando herramientas necesarias${Color_Off}"
-    # PANDOC
-    echo -ne "${BYellow}[${BYellow}WARN${BYellow}] ${BWhite}Herramienta Pandoc...${Color_Off}"
+    echo -e "\n${BBlue}[+]${Color_Off} ${BWhite}Comprobando herramientas necesarias${Color_Off}"
+    # Verificar si esta instalado Pandoc
+    echo -ne "${Yellow}[*]${Color_Off} ${IWhite}Herramienta Pandoc... ${Color_Off}"
     command -v pandoc > /dev/null 2>&1
     if [ "$(echo $?)" == "0" ]; then
-        echo -e "${LBlue}($BGreen✔${LBlue})${Color_Off}"
+        echo -e "${BGreen}[ OK ]${Color_Off}"
     else
-        echo -e "${LBlue}(${BRed}✘${LBlue})${Color_Off}"
-        echo -en "${LBlue}[${BYellow}!${LBlue}] ${BYellow}Instalando herramienta ${BGreen}Pandoc...${Color_Off}"
         pandoc_url=$(curl --silent 'https://github.com/jgm/pandoc/releases/' | grep -E 'pandoc-?[1-9].*-amd64.deb' | head -n 1 | awk -F '\"' '{print $2}')
         pandoc_file=$(curl --silent 'https://github.com/jgm/pandoc/releases/' | grep -E 'pandoc-?[1-9].*-amd64.deb' | head -n 1 | awk -F '\"' '{print $2}' | tr '/' ' ' | awk 'NF{print $NF}')
         wget "https://github.com$pandoc_url" -O /tmp/$pandoc_file > /dev/null 2>&1
         dpkg -i /tmp/$pandoc_file > /dev/null 2>&1
         if [ $? -eq 0 ];then
-            echo -e "${LBlue}(${BGreen}✔${LBlue})${Color_Off}"
+            echo -e "${BGreen}[ OK ]${Color_Off}"
         else
-            echo -e "${LBlue}(${BRed}✘${LBlue})${Color_Off}"
+            echo -e "${BRed}[ FAIL ]${Color_Off}"
+            tput cnorm && exit 1
         fi
     fi
-    # TEMPLATE EISVOGEL
-    echo -en "${BYellow}[${BYellow}WARN${BYellow}] ${BWhite}Verificando Template...${Color_Off}"
+    # Verificar si esta instalado p7zip
+    echo -en "${Yellow}[*]${Color_Off} ${IWhite}Herramienta p7zip... ${Color_Off}"
+    command -v p7zip > /dev/null 2>&1
+    if [ "$(echo $?)" == "0" ]; then
+        echo -e "${BGreen}[ OK ]${Color_Off}"
+    else
+        apt install p7zip -y > /dev/null 2>&1
+        if [ $? -eq 0 ];then
+            echo -e "${BGreen}[ OK ]${Color_Off}"
+        else
+            echo -e "${BRed}[ FAIL ]${Color_Off}"
+            tput cnorm && exit 1
+        fi
+    fi
+    # Verificar si esta instalado la plantilla Eisvogel
+    echo -en "${Yellow}[*]${Color_Off} ${IWhite}Plantilla Eisvogel... ${Color_Off}"
     if [ ! -e /root/.local/share/pandoc/templates/eisvogel.latex ];then
-        echo -e "${LBlue}(${BRed}✘${LBlue})${Color_Off}"
-        echo -en "${LBlue}[${BYellow}!${LBlue}] ${BYellow}Instalando template ${BGreen}Eisvogel...${Color_Off}"
         eisvogel_url=$(curl --silent 'https://github.com/Wandmalfarbe/pandoc-latex-template/releases/' | grep -E 'Eisvogel-?[1-9]*.zip' | head -n 1 | awk -F '\"' '{print $2}')
         eisvogel_file=$(curl --silent 'https://github.com/Wandmalfarbe/pandoc-latex-template/releases/' | grep -E 'Eisvogel-?[1-9]*.zip' | head -n 1 | awk -F '\"' '{print $2}' | tr '/' ' ' | awk 'NF{print $NF}')
         wget "https://github.com$eisvogel_url" -O /tmp/$eisvogel_file > /dev/null 2>&1
@@ -127,51 +169,78 @@ function dependencies(){
         mkdir -p /root/.local/share/pandoc/templates > /dev/null 2>&1
         cp /tmp/eisvogel.latex /root/.local/share/pandoc/templates > /dev/null 2>&1
         if [ $? -eq 0 ];then
-            echo -e "${LBlue}(${BGreen}✔${LBlue})${Color_Off}"
+            echo -e "${BGreen}[ OK ]${Color_Off}"
         else
-            echo -e "${LBlue}(${BRed}✘${LBLue})${Color_Off}"
+            echo -e "${BRed}[ FAIL ]${Color_Off}"
+            tput cnorm && exit 1
         fi
     else
-        echo -e "${LBlue}(${BGreen}✔${LBlue})${Color_Off}"
+        echo -e "${BGreen}[ OK ]${Color_Off}"
     fi
 }
 
 function createZip(){
-    echo -e "${BBlue}[${BBlue}INFO${BBlue}] ${BWhite}Creando paquete 7z${Color_Off}"
+    echo -e "\n${BBlue}[+]${Color_Off} ${BWhite}Creando paquete 7z${Color_Off}"
     tput cnorm
-    echo -en "${BPurple}[${BPurple}QUES${BPurple}] ${BWhite}Password para el archivo:${Color_Off} " && read PASSWORD
+    echo -en "${BPurple}[?]${Color_Off} ${BCyan}Password para el archivo:${Color_Off} " && read PASSWORD
     tput civis
-    echo -e "${BBlue}[${BBlue}INFO${BBlue}] ${BWhite}Realizando paquete 7z...${Color_Off}"
-    ZIP_PACKAGE="$FILE_PDF.7z"
-    7z a $ZIP_PACKAGE -p$PASSWORD $FILE_PDF > /dev/null 2>&1
+    ZIP_NAME=$(echo $FILE_PDF | awk -F ".pdf" '{print $1}')
+    echo -en "${Yellow}[*]${Color_Off} ${IWhite}Realizando paquete 7z (${Color_Off}${BWhite}$ZIP_NAME.7z${Color_Off}${IWhite})...${Color_Off} "
+    7z a $ZIP_NAME.7z -p$PASSWORD $FILE_PDF > /dev/null 2>&1
     if [ $? -eq 0 ];then
-        echo -e "${BGreen}[${BGreen}PASS${BGreen}] ${BWhite}Creado correctamente el paquete ($ZIP_PACKAGE)${Color_Off}"
+        echo -e "${BGreen}[ OK ]${Color_Off}"
+        echo -e "\n${BGreen}[✔]${Color_Off} ${IGreen}Visualización preliminar del reporte (${Color_Off}${BWhite}$FILE_PDF${Color_Off}${IWhite})${Color_Off}\n"
+        atril $FILE_PDF
     else
-        echo -e "${BRed}[${BRed}ERRO${BRed}] ${BWhite}Fallo al crear el paquete ($ZIP_PACKAGE)${Color_Off}"
+        echo -e "${BRed}[ FAIL ]${Color_Off}\n"
+        tput cnorm && exit 1
     fi
 }
 
 function createReport(){
-    echo -e "\n${BBlue}[${BBlue}INFO${BBlue}] ${BWhite}Creando reporte${Color_Off}"
+    echo -e "\n${BBlue}[+]${Color_Off} ${BWhite}Creando reporte${Color_Off}"
+    echo -en "${Yellow}[*]${Color_Off} ${IWhite}Generando el reporte... ${Color_Off}"
     pandoc $FILE_MD -o $FILE_PDF --from markdown+yaml_metadata_block+raw_html --template eisvogel --table-of-contents --toc-depth 6 --number-sections --top-level-division=chapter --highlight-style zenburn
     if [ $? -eq 0 ];then
-        echo -e "${BGreen}[${BGreen}PASS${BGreen}] ${BWhite}Creado correctamente el reporte ($FILE_PDF)${Color_Off}"
+        echo -e "${BGreen}[ OK ]${Color_Off}"
         tput cnorm
-        echo -en "${BPurple}[${BPurple}QUES${BPurple}] ${BWhite}Desea guardar el reporte en un archivo ZIP? (${BYellow}Y${BWhite}/${BRed}n${BWhite}):${Color_Off} " && read input
+        echo -en "\n${BPurple}[?]${Color_Off} ${BCyan}Desea guardar el reporte en un archivo ZIP? (${BYellow}Y${BCyan}/${BRed}n${BCyan}):${Color_Off} " && read input
         tput civis
         case "$input" in
-            n|N) atril $FILE_PDF && echo -e "${BGreen}[${BGreen}PASS${BGreen}] ${BWhite}Visualización preliminar del reporte ($FILE_PDF)${Color_Off}";;
+            n|N) echo -e "\n${BGreen}[✔]${Color_Off} ${IGreen}Visualización preliminar del reporte (${Color_Off}${BWhite}$FILE_PDF${Color_Off}${IGreen})${Color_Off}\n" && atril $FILE_PDF;;
             *) createZip;;
         esac
     else
-        echo -e "${BRed}[${BRed}ERRO${BRed}] ${BWhite}Error al crear el reporte${Color_Off}\n"
+        echo -e "${BRed}[ FAIL ]${Color_Off}\n"
+        exit 1
     fi
     tput cnorm
 }
 
 if [ "$(echo $UID)" == "0" ]; then
+    if [ "$(echo $1)" == "--update" ]; then
+        banner
+        echo -e "${BBlue}[+]${Color_Off} ${BWhite}md2pdf Versión $VERSION${Color_Off}"
+        echo -e "${BBlue}[+]${Color_Off} ${BWhite}Verificando actualización de md2pdf${Color_Off}"
+        checkUpdate
+        echo -e "\t${BWhite}$VERSION ${IWhite}Versión Instalada${Color_Off}"
+        echo -e "\t${BWhite}$GIT ${IWhite}Versión en Git${Color_Off}\n"
+        if [ "$update" != "1" ]; then
+            tput cnorm && exit 0;
+        else
+            echo -e "${BBlue}[+]${Color_Off} ${BWhite}Necesita actualizar!${Color_Off}"
+            tput cnorm
+            echo -en "${BPurple}[?]${Color_Off} ${BCyan}Quiere actualizar? (${BGreen}Y${BCyan}/${BRed}n${BCyan}):${Color_Off} " && read CONDITION
+            tput civis
+            case "$CONDITION" in
+                n|N) echo -e "\n${LBlue}[${BYellow}!${LBlue}] ${BRed}No se actualizo, se queda en la versión ${BWhite}$VERSION${Color_Off}\n" && tput cnorm && exit 0;;
+                *) installUpdate;;
+            esac
+        fi
+    fi
     if [ "$#" -ne 2 ];then
         echo -e "\n\t${LBlue}[${BYellow}!${LBlue}] ${BWhite}Uso: ${BGreen}$0 ${IGreen}<input.md> <output.pdf>${Color_Off}\n"
+        echo -e "\n\t${LBlue}[${BYellow}!${LBlue}] ${BWhite}Actualizar: ${BGreen}$0 ${IGreen}--update${Color_Off}\n"
         exit 1
     fi
     banner
