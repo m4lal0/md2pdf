@@ -6,6 +6,7 @@
 [![PDF Supported](https://img.shields.io/badge/PDF-Supported-blue?style=flat-square&logo=adobe-acrobat-reader)](#)
 [![By](https://img.shields.io/badge/By-m4lal0-green?style=flat-square&logo=github)](#)
 
+
 Script en Bash para facilitar el crear un reporte profesional de un archivo con formato Markdown a un archivo PDF, con opción a comprimirlo en un archivo 7-zip con password.
 
 El script fue inspirado para poder realizar de forma más eficiente, limpio, profesional y rápido un reporte para las certificaciones de Seguridad informática de Offensive Security como la OSCP, OSWE, OSCE, OSEE, OSWP.
@@ -23,6 +24,12 @@ Ejemplos:
 + LaTeX - (`apt install texlive`)
 + LaTeX-extra - (`apt install texlive-latex-extra`)
 + LaTeX-fonts-extra - (`apt install texlive-fonts-extra`)
+
+## Instalación
+```
+wget https://raw.githubusercontent.com/m4lal0/md2pdf/main/md2pdf.sh
+chmod +x md2pdf.sh && mv md2pdf.sh /usr/local/bin/md2pdf
+```
 
 ## Configuración del reporte
 
@@ -73,7 +80,7 @@ Escribir su reporte en **Markdown**.
 
 Ejecutar el script y pasar como primer argumento el archivo markdown y como segundo argumento proporcionar el nombre del reporte con extensión PDF que queremos que transforme:
 ```bash
-./md2pdf.sh <input.md> <output.pdf>
+md2pdf <input.md> <output.pdf>
 ```
 
 El script verificará primero unos requerimientos previos (Pandoc y plantilla Eisvogel), si no cuenta con ellos los instalará automáticamente.
