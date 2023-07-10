@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #by @m4lal0
 
@@ -77,13 +77,15 @@ On_White='\033[47m'     # Background White
 # Variables Globales
 FILE_MD=$1
 FILE_PDF=$2
-VERSION=1.0.1
+VERSION=2.0.0
+CREATE_PDF=0
+CREATE_ZIP=0
 
 # Menejo del Ctrl + C
 trap ctrl_c INT
 
 function ctrl_c(){
-    echo -e "\n\n${LBlue}[${BYellow}!${LBlue}] ${BRed}Saliendo de la aplicación...${Color_Off}"
+    echo -e "\n\n${BYellow}[!] ${IYellow}Saliendo de la aplicación...${Color_Off}"
     tput cnorm
     exit 1
 }
@@ -94,7 +96,7 @@ function checkUpdate(){
         echo -e "${BGreen}[✔]${Color_Off} ${BGreen}La versión actual es la más reciente.${Color_Off}\n"
         tput cnorm; exit 0
     else
-        echo -e "${Yellow}[*]${Color_Off} ${IWhite}Actualización disponible${Color_Off}"
+        echo -e "${Yellow}[!]${Color_Off} ${IWhite}Actualización disponible${Color_Off}"
         echo -e "${Yellow}[*]${Color_Off} ${IWhite}Actualización de la versión${Color_Off} ${BWhite}$VERSION${Color_Off} ${IWhite}a la${Color_Off} ${BWhite}$GIT${Color_Off}"
         update="1"
     fi
@@ -111,7 +113,7 @@ function installUpdate(){
         echo -e "${BRed}[ FAIL ]${Color_Off}"
         tput cnorm && exit 1
     fi
-    echo -e "\n${BGreen}[✔]${Color_Off} ${IGreen}Versión actualizada a${Color_Off} ${BWhite}$GIT${Color_Off}\n"
+    echo -e "\n${BGreen}[+]${Color_Off} ${IGreen}Versión actualizada a${Color_Off} ${BWhite}$GIT${Color_Off}\n"
     tput cnorm && exit 0
 }
 
@@ -127,9 +129,9 @@ function banner(){
 }
 
 function dependencies(){
-    echo -e "\n${BBlue}[+]${Color_Off} ${BWhite}Comprobando herramientas necesarias${Color_Off}"
+    echo -e "\n${BWhite}[~]${Color_Off} ${White}Comprobando herramientas necesarias${Color_Off}"
     # Verificar si esta instalado Pandoc
-    echo -ne "${Yellow}[*]${Color_Off} ${IWhite}Herramienta Pandoc... ${Color_Off}"
+    echo -ne "${Blue}[*]${Color_Off} ${IBlue}Herramienta Pandoc... ${Color_Off}"
     command -v pandoc > /dev/null 2>&1
     if [ "$(echo $?)" == "0" ]; then
         echo -e "${BGreen}[ OK ]${Color_Off}"
@@ -146,7 +148,7 @@ function dependencies(){
         fi
     fi
     # Verificar si esta instalado p7zip
-    echo -en "${Yellow}[*]${Color_Off} ${IWhite}Herramienta p7zip... ${Color_Off}"
+    echo -en "${Blue}[*]${Color_Off} ${IBlue}Herramienta p7zip...  ${Color_Off}"
     command -v p7zip > /dev/null 2>&1
     if [ "$(echo $?)" == "0" ]; then
         echo -e "${BGreen}[ OK ]${Color_Off}"
@@ -160,7 +162,7 @@ function dependencies(){
         fi
     fi
     # Verificar si esta instalado la plantilla Eisvogel
-    echo -en "${Yellow}[*]${Color_Off} ${IWhite}Plantilla Eisvogel... ${Color_Off}"
+    echo -en "${Blue}[*]${Color_Off} ${IBlue}Plantilla Eisvogel... ${Color_Off}"
     if [ ! -e /root/.local/share/pandoc/templates/eisvogel.latex ];then
         eisvogel_url=$(curl --silent 'https://github.com/Wandmalfarbe/pandoc-latex-template/releases/' | grep -E 'Eisvogel-?[1-9]*.zip' | head -n 1 | awk -F '\"' '{print $2}')
         eisvogel_file=$(curl --silent 'https://github.com/Wandmalfarbe/pandoc-latex-template/releases/' | grep -E 'Eisvogel-?[1-9]*.zip' | head -n 1 | awk -F '\"' '{print $2}' | tr '/' ' ' | awk 'NF{print $NF}')
@@ -179,17 +181,18 @@ function dependencies(){
     fi
 }
 
-function createZip(){
-    echo -e "\n${BBlue}[+]${Color_Off} ${BWhite}Creando paquete 7z${Color_Off}"
-    tput cnorm
-    echo -en "${BPurple}[?]${Color_Off} ${BCyan}Password para el archivo:${Color_Off} " && read PASSWORD
-    tput civis
+function empZip(){
     ZIP_NAME=$(echo $FILE_PDF | awk -F ".pdf" '{print $1}')
-    echo -en "${Yellow}[*]${Color_Off} ${IWhite}Realizando paquete 7z (${Color_Off}${BWhite}$ZIP_NAME.7z${Color_Off}${IWhite})...${Color_Off} "
-    7z a $ZIP_NAME.7z -p$PASSWORD $FILE_PDF > /dev/null 2>&1
+    echo -en "${Blue}[*]${Color_Off} ${IBlue}Realizando paquete 7z (${Color_Off}${BWhite}$ZIP_NAME.7z${Color_Off}${IBlue})...${Color_Off} "
+    if [[ -z "$PASSWORD" ]]; then
+        7z a $ZIP_NAME.7z $FILE_PDF &> /dev/null
+    else
+        7z a $ZIP_NAME.7z -p$PASSWORD $FILE_PDF &> /dev/null
+    fi
     if [ $? -eq 0 ];then
+        CREATE_ZIP=1
         echo -e "${BGreen}[ OK ]${Color_Off}"
-        echo -e "\n${BGreen}[✔]${Color_Off} ${IGreen}Visualización preliminar del reporte (${Color_Off}${BWhite}$FILE_PDF${Color_Off}${IWhite})${Color_Off}\n"
+        echo -e "\n${BYellow}[!]${Color_Off} ${IYellow}Visualización preliminar del reporte (${Color_Off}${BWhite}${Blink}$FILE_PDF${Color_Off}${IYellow})${Color_Off}\n"
         atril $FILE_PDF
     else
         echo -e "${BRed}[ FAIL ]${Color_Off}\n"
@@ -197,17 +200,42 @@ function createZip(){
     fi
 }
 
+function createZip(){
+    echo -e "\n${BWhite}[~]${Color_Off} ${White}Creando paquete 7z${Color_Off}"
+    tput cnorm
+    echo -en "${BPurple}[?]${Color_Off} ${Purple}Desea colocar una contraseña al ZIP? (${Color_Off}${BYellow}Y${Color_Off}${Purple}/${Color_Off}${BRed}n${Color_Off}${Purple}):${Color_Off} " && read input
+    case "$input" in
+        n|N) tput civis && empZip;;
+        *) echo -en "${BPurple}[?]${Color_Off} ${Purple}Password para el archivo:${Color_Off} " && read PASSWORD && tput civis && empZip;;
+    esac
+}
+
+function hashsum(){
+    if [[ $CREATE_PDF -eq 1 ]]; then
+        echo -e "${BYellow}[!]${Color_Off} ${Yellow}Hash sum del archivo PDF${Color_Off}"
+        echo -e "${Blue}[*]${Color_Off} ${IBlue}   MD5sum:${Color_Off} ${White}$(md5sum $FILE_PDF | cut -d ' ' -f1)${Color_Off}" 
+        echo -e "${Blue}[*]${Color_Off} ${IBlue}  SHA1sum:${Color_Off} ${White}$(sha1sum $FILE_PDF | cut -d ' ' -f1)${Color_Off}"
+        echo -e "${Blue}[*]${Color_Off} ${IBlue}SHA256sum:${Color_Off} ${White}$(sha256sum $FILE_PDF | cut -d ' ' -f1)${Color_Off}"
+    fi
+    if [[ $CREATE_ZIP -eq 1 ]]; then
+        echo -e "\n${BYellow}[!]${Color_Off} ${Yellow}Hash sum del archivo ZIP${Color_Off}"
+        echo -e "${Blue}[*]${Color_Off} ${IBlue}   MD5sum:${Color_Off} ${White}$(md5sum $ZIP_NAME.7z | cut -d ' ' -f1)${Color_Off}" 
+        echo -e "${Blue}[*]${Color_Off} ${IBlue}  SHA1sum:${Color_Off} ${White}$(sha1sum $ZIP_NAME.7z | cut -d ' ' -f1)${Color_Off}"
+        echo -e "${Blue}[*]${Color_Off} ${IBlue}SHA256sum:${Color_Off} ${White}$(sha256sum $ZIP_NAME.7z | cut -d ' ' -f1)${Color_Off}"
+    fi
+}
+
 function createReport(){
-    echo -e "\n${BBlue}[+]${Color_Off} ${BWhite}Creando reporte${Color_Off}"
-    echo -en "${Yellow}[*]${Color_Off} ${IWhite}Generando el reporte... ${Color_Off}"
+    echo -e "\n${BWhite}[~]${Color_Off} ${White}Creando reporte${Color_Off}"
+    echo -en "${Blue}[*]${Color_Off} ${IBlue}Generando el reporte... ${Color_Off}"
     pandoc $FILE_MD -o $FILE_PDF --from markdown+yaml_metadata_block+raw_html --template eisvogel --table-of-contents --toc-depth 6 --number-sections --top-level-division=chapter --highlight-style zenburn
     if [ $? -eq 0 ];then
         echo -e "${BGreen}[ OK ]${Color_Off}"
-        tput cnorm
-        echo -en "\n${BPurple}[?]${Color_Off} ${BCyan}Desea guardar el reporte en un archivo ZIP? (${BYellow}Y${BCyan}/${BRed}n${BCyan}):${Color_Off} " && read input
+        tput cnorm; CREATE_PDF=1
+        echo -en "\n${BPurple}[?]${Color_Off} ${Purple}Desea guardar el reporte en un archivo ZIP? (${Color_Off}${BYellow}Y${Color_Off}${Purple}/${Color_Off}${BRed}n${Color_Off}${Purple}):${Color_Off} " && read input
         tput civis
         case "$input" in
-            n|N) echo -e "\n${BGreen}[✔]${Color_Off} ${IGreen}Visualización preliminar del reporte (${Color_Off}${BWhite}$FILE_PDF${Color_Off}${IGreen})${Color_Off}\n" && atril $FILE_PDF;;
+            n|N) echo -e "\n${BYellow}[!]${Color_Off} ${IYellow}Visualización preliminar del reporte (${Color_Off}${BWhite}${Blink}$FILE_PDF${Color_Off}${IYellow})${Color_Off}\n" && atril $FILE_PDF;;
             *) createZip;;
         esac
     else
@@ -220,33 +248,34 @@ function createReport(){
 if [ "$(echo $UID)" == "0" ]; then
     if [ "$(echo $1)" == "--update" ]; then
         banner
-        echo -e "${BBlue}[+]${Color_Off} ${BWhite}md2pdf Versión $VERSION${Color_Off}"
-        echo -e "${BBlue}[+]${Color_Off} ${BWhite}Verificando actualización de md2pdf${Color_Off}"
+        echo -e "${BYellow}[!]${Color_Off} ${IYellow}md2pdf Versión $VERSION${Color_Off}"
+        echo -e "${BWhite}[~]${Color_Off} ${IWhite}Verificando actualización de md2pdf${Color_Off}"
         checkUpdate
         echo -e "\t${BWhite}$VERSION ${IWhite}Versión Instalada${Color_Off}"
         echo -e "\t${BWhite}$GIT ${IWhite}Versión en Git${Color_Off}\n"
         if [ "$update" != "1" ]; then
             tput cnorm && exit 0;
         else
-            echo -e "${BBlue}[+]${Color_Off} ${BWhite}Necesita actualizar!${Color_Off}"
+            echo -e "${BYellow}[!]${Color_Off} ${IYellow}Necesita actualizar!${Color_Off}"
             tput cnorm
-            echo -en "${BPurple}[?]${Color_Off} ${BCyan}Quiere actualizar? (${BGreen}Y${BCyan}/${BRed}n${BCyan}):${Color_Off} " && read CONDITION
+            echo -en "${BPurple}[?]${Color_Off} ${Purple}Quiere actualizar? (${Color_Off}${BGreen}Y${Color_Off}${Purple}/${Color_Off}${BRed}n${Color_Off}${Purple}):${Color_Off} " && read CONDITION
             tput civis
             case "$CONDITION" in
-                n|N) echo -e "\n${LBlue}[${BYellow}!${LBlue}] ${BRed}No se actualizo, se queda en la versión ${BWhite}$VERSION${Color_Off}\n" && tput cnorm && exit 0;;
+                n|N) echo -e "\n${BRed}[-]${Color_Off} ${IRed}No se actualizo, se queda en la versión ${Color_Off}${BWhite}$VERSION${Color_Off}\n" && tput cnorm && exit 0;;
                 *) installUpdate;;
             esac
         fi
     fi
     if [ "$#" -ne 2 ];then
-        echo -e "\n\t${LBlue}[${BYellow}!${LBlue}] ${BWhite}Uso: ${BGreen}$0 ${IGreen}<input.md> <output.pdf>${Color_Off}\n"
-        echo -e "\n\t${LBlue}[${BYellow}!${LBlue}] ${BWhite}Actualizar: ${BGreen}$0 ${IGreen}--update${Color_Off}\n"
+        echo -e "\n\t${BYellow}[!]${Color_Off} ${BWhite}Uso:${Color_Off} ${BGreen}$0${Color_Off} ${IGreen}<input.md> <output.pdf>${Color_Off}\n"
+        echo -e "\n\t${BYellow}[!]${Color_Off} ${BWhite}Actualizar:${Color_Off} ${BGreen}$0${Color_Off} ${IGreen}--update${Color_Off}\n"
         exit 1
     fi
     banner
     dependencies
     createReport
+    hashsum
 else
-	echo -e "\n${LBlue}[${BYellow}!${LBlue}] ${BRed}Ejecutar la herramienta como root${Color_Off}\n"
+	echo -e "\n${BYellow}[!]${Color_Off} ${IRed}Ejecutar la herramienta como root${Color_Off}\n"
 	exit 1
 fi
