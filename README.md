@@ -1,11 +1,12 @@
 # MD2PDF
-[![GitHub repo size](https://img.shields.io/github/repo-size/m4lal0/md2pdf?logo=webpack&style=flat-square)](#)
-[![Bash Supported](https://img.shields.io/badge/Bash-Supported-blue?style=flat-square&logo=gnu-bash)](#)
-[![Markdown Supported](https://img.shields.io/badge/Markdown-Supported-blue?style=flat-square&logo=markdown)](#)
-[![LaTeX Supported](https://img.shields.io/badge/LaTeX-Supported-blue?style=flat-square&logo=latex)](#)
-[![PDF Supported](https://img.shields.io/badge/PDF-Supported-blue?style=flat-square&logo=adobe-acrobat-reader)](#)
-[![By](https://img.shields.io/badge/By-m4lal0-green?style=flat-square&logo=github)](#)
+[![GitHub repo size](https://img.shields.io/github/repo-size/m4lal0/md2pdf?logo=webpack&style=for-the-badge)](#)
+[![Bash Supported](https://img.shields.io/badge/Bash-Supported-blue?style=for-the-badge&logo=gnu-bash)](#)
+[![Markdown Supported](https://img.shields.io/badge/Markdown-Supported-blue?style=for-the-badge&logo=markdown)](#)
+[![LaTeX Supported](https://img.shields.io/badge/LaTeX-Supported-blue?style=for-the-badge&logo=latex)](#)
+[![Version](https://img.shields.io/badge/Version-2.0.0-blue?style=for-the-badge)](#)
+[![By](https://img.shields.io/badge/By-m4lal0-green?style=for-the-badge&logo=github)](#)
 
+![md2pdf](./images/name.png)
 
 Script en Bash para facilitar el crear un reporte profesional de un archivo con formato Markdown a un archivo PDF, con opción a comprimirlo en un archivo 7-zip con password.
 
@@ -26,7 +27,7 @@ Ejemplos:
 + LaTeX-fonts-extra - (`apt install texlive-fonts-extra`)
 
 ## Instalación
-```
+```bash
 wget https://raw.githubusercontent.com/m4lal0/md2pdf/main/md2pdf.sh
 chmod +x md2pdf.sh && mv md2pdf.sh /usr/local/bin/md2pdf
 ```
